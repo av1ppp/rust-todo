@@ -1,82 +1,72 @@
 extern crate todo;
 
+use std::env;
 
 fn main() {
-    let todos = todo::get_all().unwrap();
-    for t in todos {
-        println!("{:?}", t);
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        panic!("not enought args");
     }
 
-    todo::add(todo::ToDo{
-        id: 134,
-        message: String::from("hello"),
-    }).unwrap()
+    let command = args[1].as_str();
+    let all_todos = todo::get_all().unwrap();
+
+    match command {
+        "get" => {
+            if args.len() == 3 {
+                let id = args[2].parse::<i32>().unwrap();
+                let t = todo::get_by_id(id).unwrap();
+                println!("id: {}\nmessage: {}\n", t.id, t.message);
+
+            } else {
+                for t in all_todos {
+                    println!("id: {}\nmessage: {}\n", t.id, t.message);
+                }
+            }
+        }
+        
+        "add" => {
+            if args.len() < 3 {
+                panic!("not enought args");
+            }
+
+            let mut last_id = 0;
+            for t in all_todos {
+                if t.id > last_id {
+                    last_id = t.id;
+                }
+            }
+
+            let message = args[2].clone();
+            todo::add(todo::ToDo{
+                id: last_id+1,
+                message: message,
+            }).unwrap();
+        }
+
+        "del" => {
+            if args.len() < 3 {
+                panic!("not enought args");
+            }
+
+            let id = args[2].parse::<i32>().unwrap();
+            todo::delete_by_id(id).unwrap();
+        }
+
+        _ => {
+            panic!("command is not defined");
+        }
+    }
+
+
+    // let todos = todo::get_all().unwrap();
+    // for t in todos {
+    //     println!("{:?}", t);
+    // }
+
+    // todo::add(todo::ToDo{
+    //     id: 134,
+    //     message: String::from("hello"),
+    // }).unwrap()
 }
-
-// use std::fs::File;
-// use std::fs::OpenOptions;
-// use std::io::prelude::*;
-// use std::error::Error;
-// use std::io::{BufRead, BufReader};
-// use std::env;
-// use std::str;
-
-// struct TodoItem {
-//     msg: String
-// }
-
-// static LOG_FILE_PATH: &str = "./logs.txt";
-
-// fn main() {
-//     let file: File = get_log_file().unwrap();
-
-//     let args: Vec<String> = env::args().collect();
-//     assert_ne!(args.len(), 1);
-
-//     let cmd: &str = &args[1].to_string();
-
-//     match cmd {
-//         "add" => {
-//             assert_ne!(args.len(), 2);
-//             let msg: &str = &args[2].to_string();
-//             add_log(file, msg).unwrap();
-//         }
-
-//         "get" => {
-//             let logs = get_logs(file);
-//             for l in logs {
-//                 println!("Log: {}", l.msg);
-//             }
-//         }
-
-//         _ => panic!("Unknown command")
-//     }
-// }
-
-// /// Add message to logs
-// fn add_log(mut file: File, msg: &str) -> std::io::Result<()> {
-//     let msg_ = String::from("\n")+msg;
-//     file.write_all(msg_.as_bytes())
-// }
-
-// /// Returns all log messages
-// fn get_logs(file: File) -> Vec<TodoItem> {
-//     let mut v: Vec<TodoItem> = vec![];
-//     for line in BufReader::new(file).lines() {
-//         let line = line.unwrap();
-//         if line.len() > 0 {
-//             v.push(TodoItem{msg: String::from(line)});
-//         }
-//     }
-//     v
-// }
-
-// /// Returns a log file
-// fn get_log_file() -> std::io::Result<File> {
-//     OpenOptions::new()
-//         .append(true)
-//         .write(true)
-//         .read(true)
-//         .create(true)
-//         .open(LOG_FILE_PATH)
-// }
