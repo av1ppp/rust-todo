@@ -1,11 +1,29 @@
 use std::fs;
 use std::io::prelude::*;
 use std::path::Path;
+use dirs::home_dir;
 use serde_json;
 
 use serde::{Deserialize, Serialize};
 
-static FILEPATH: &str = "/home/signum/.todos";
+fn get_filepath() -> Result<String, String> {
+    match home_dir() {
+        Some(mut home) => {
+            home.push(".todos");
+            match home.to_str() {
+                Some(filepath) => {
+                    Ok(String::from(filepath))
+                }
+                None => {
+                    Err(String::from("home dir is not defined"))
+                }
+            }
+        }
+        None => {
+            Err(String::from("home dir is not defined"))
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ToDo {
@@ -32,8 +50,10 @@ pub fn get_by_id(id: i32) -> Result<ToDo, String> {
 }
 
 fn get_file_data() -> Result<String, String> {
-    if Path::new(&FILEPATH).exists() {
-        match fs::File::open(&FILEPATH) {
+    let filepath = get_filepath()?;
+
+    if Path::new(filepath.as_str()).exists() {
+        match fs::File::open(filepath) {
             Ok(mut v) => {
                 let mut buf = String::new();
                 match v.read_to_string(&mut buf) {
@@ -45,7 +65,7 @@ fn get_file_data() -> Result<String, String> {
         }
 
     } else {
-        match fs::File::create(&FILEPATH) {
+        match fs::File::create(filepath) {
             Ok(mut v) => {
                 let default_value = String::from("{ \"todos\": [] }");
 
@@ -60,6 +80,7 @@ fn get_file_data() -> Result<String, String> {
 }
 
 fn save_to_file(todos: Vec<ToDo>) -> Result<(), String> {
+    let filepath = get_filepath()?;
     let json = FileJSON{todos: todos};
 
     let data = match serde_json::to_string(&json) {
@@ -67,7 +88,7 @@ fn save_to_file(todos: Vec<ToDo>) -> Result<(), String> {
         Err(err) => return Err(err.to_string())
     };
 
-    match fs::write(&FILEPATH, data) {
+    match fs::write(filepath, data) {
         Ok(_) => Ok(()),
         Err(err) => Err(err.to_string())
     }
