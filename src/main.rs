@@ -14,14 +14,15 @@ fn main() {
             .arg(
                 Arg::with_name("content")
                     .required(true)
+                    .index(1)
             )
         )
         .subcommand(
             SubCommand::with_name("del")
             .arg(
                 Arg::with_name("id")
-                .multiple(true)
                 .required(true)
+                .index(1)
             )
         )
         .get_matches();
@@ -37,7 +38,7 @@ fn main() {
         return
     }
 
-    if let Some(_matches) = matches.subcommand_matches("add") {
+    if let Some(matches) = matches.subcommand_matches("add") {
         let content = matches.value_of("content").unwrap();
 
         let mut last_id = 0;
@@ -54,7 +55,7 @@ fn main() {
         return
     } 
 
-    if let Some(_matches) = matches.subcommand_matches("del") {
+    if let Some(matches) = matches.subcommand_matches("del") {
         let id_str = matches.value_of("id").unwrap();
         let id = id_str.parse::<i32>().unwrap();
         todo::delete_by_id(id).unwrap();
